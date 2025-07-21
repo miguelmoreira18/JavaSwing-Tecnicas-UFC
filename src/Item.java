@@ -10,4 +10,9 @@ public class Item extends AbstractItem {
         this.lending_warning = lending_warning;
         this.available = available;
     }
+
+    @Override
+    public String toString() {
+        return name;
+    }
 }

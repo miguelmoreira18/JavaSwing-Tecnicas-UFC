@@ -2,10 +2,8 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
-import java.util.ArrayList;
 
 public class CategoryView extends JPanel {
-    private ArrayList<Item> itemsList = new ArrayList<>();
     private JPanel itemsScrollPaneContent;
     private JTextField searchField;
 
@@ -77,11 +75,7 @@ public class CategoryView extends JPanel {
         }
     }
 
-    public void setNewItem(Item item) {
-        this.itemsList.add(item);
-    }
-
-    public void newItemLabel(JLabel itemLabel) {
+    public void newLabel(JLabel itemLabel) {
         itemsScrollPaneContent.add(itemLabel);
         itemsScrollPaneContent.revalidate();
         itemsScrollPaneContent.repaint();

@@ -1,15 +1,34 @@
 import java.util.ArrayList;
+import java.util.List;
 
 public class Set {
-    private ArrayList<Item> pieces;
+    private String name;
+    private List<Item> pieces;
     private ArrayList<String> usages;
 
-    public ArrayList<Item> getPieces() {
+    public Set(String name, List<Item> items) {
+        this.name = name;
+        pieces = items;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public List<Item> getPieces() {
         return pieces;
     }
 
     public void setPieces(Item item) {
         pieces.add(item);
+    }
+
+    public void setPiecesBulk(List<Item> items) {
+        pieces.addAll(items);
     }
 
     public ArrayList<String> getUsages() {

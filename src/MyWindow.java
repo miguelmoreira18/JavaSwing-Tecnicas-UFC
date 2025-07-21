@@ -2,10 +2,12 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 
 public class MyWindow {
     private ItemCreationListener creationListener;
     private ArrayList<Item> itemList = new ArrayList<>();
+    private ArrayList<Set> setList = new ArrayList<>();
 
     public static void main(String[] args) {
         MyWindow window = new MyWindow();
@@ -61,10 +63,7 @@ public class MyWindow {
                 // passa o novo item pro metodo que vai criar uma label pra ele
                 JLabel itemView = window.createItemView(newItem);
 
-                window.itemList.add(newItem);
-
-                vestuarioView.setNewItem(newItem);
-                vestuarioView.newItemLabel(itemView);
+                vestuarioView.newLabel(itemView);
                 vestuarioView.filterItems();
             });
 
@@ -86,6 +85,15 @@ public class MyWindow {
                         JOptionPane.OK_CANCEL_OPTION,
                         JOptionPane.PLAIN_MESSAGE
                 );
+
+                if(result == JOptionPane.OK_OPTION) {
+                    Set newSet = window.onSetCreate(newSetPanel.getNameField(), newSetPanel.getSelectedItems());
+
+                    JLabel setView = window.createSetView(newSet);
+
+                    combinacoesView.newLabel(setView);
+                    combinacoesView.filterItems();
+                }
             });
 
             // bota as 2 views no container principal
@@ -102,16 +110,27 @@ public class MyWindow {
         });
     }
 
+    // metodo pra criar o set
+    public Set onSetCreate(String name, List<Item> items) {
+        Set newSet = new Set(name, items);
+        setList.add(newSet);
+        return newSet;
+    }
+
     // metodo pra criar o item
     public Item onItemCreate(String name, String color, String size, String origin, String purchase, String conservation, String imagePath, boolean lending, boolean available) {
         Item newItem = new Item(name, color, size, origin, purchase, conservation, imagePath, lending, available);
         itemList.add(newItem);
-
-        System.out.println("New item created and added to the list in Main!");
-        System.out.println("Current item list size: " + itemList.size());
-        System.out.println(newItem.getImage_path());
-
         return newItem;
+    }
+
+    private JLabel createSetView(Set set) {
+        JLabel label = new JLabel(set.getName(), SwingConstants.CENTER);
+        label.setPreferredSize(new Dimension(100, 140));
+        label.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        label.setText(set.getName());
+
+        return label;
     }
 
     private JLabel createItemView(Item item) {
