@@ -11,6 +11,13 @@ public class Set {
         pieces = items;
     }
 
+    public boolean containsItem(Item item) {
+        for(Item i : pieces) {
+            if(i.equals(item)) return true;
+        }
+        return false;
+    }
+
     public String getName() {
         return name;
     }

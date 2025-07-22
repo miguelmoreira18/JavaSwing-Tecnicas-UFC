@@ -2,10 +2,12 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
+import java.util.ArrayList;
 
 public class CategoryView extends JPanel {
-    private JPanel itemsScrollPaneContent;
-    private JTextField searchField;
+    private final JPanel itemsScrollPaneContent;
+    private final JTextField searchField;
+    private ArrayList<JButton> editButtons;
 
     public CategoryView(String title, JComponent actionPanel) {
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -26,12 +28,6 @@ public class CategoryView extends JPanel {
         JPanel itemsPanel = new JPanel(new BorderLayout());
         itemsScrollPaneContent = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
         itemsScrollPaneContent.setBackground(Color.LIGHT_GRAY);
-        for (int i = 0; i < 4; i++) {
-            JLabel itemLabel = new JLabel("Item " + i, SwingConstants.CENTER);
-            itemLabel.setPreferredSize(new Dimension(100, 140));
-            itemLabel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-            itemsScrollPaneContent.add(itemLabel);
-        }
         JScrollPane itemsScrollPane = new JScrollPane(itemsScrollPaneContent);
         itemsScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
         itemsPanel.add(itemsScrollPane, BorderLayout.CENTER);
@@ -75,8 +71,8 @@ public class CategoryView extends JPanel {
         }
     }
 
-    public void newLabel(JLabel itemLabel) {
-        itemsScrollPaneContent.add(itemLabel);
+    public void newLabel(JLabel label) {
+        itemsScrollPaneContent.add(label);
         itemsScrollPaneContent.revalidate();
         itemsScrollPaneContent.repaint();
     }

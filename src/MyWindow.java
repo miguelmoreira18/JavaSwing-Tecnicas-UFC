@@ -1,11 +1,12 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 public class MyWindow {
-    private ItemCreationListener creationListener;
     private ArrayList<Item> itemList = new ArrayList<>();
     private ArrayList<Set> setList = new ArrayList<>();
 
@@ -26,6 +27,7 @@ public class MyWindow {
 
             JButton novoItemButton = new JButton("Novo item");
             JButton novaLavagemButton = new JButton("Nova lavagem");
+            JButton edicaoButton = new JButton("Editar item");
 
             // mesmo alignment pros 2 botoes
             novoItemButton.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -39,7 +41,7 @@ public class MyWindow {
             CategoryView vestuarioView = new CategoryView("Vestuário", vestuarioActionPanel);
 
             novoItemButton.addActionListener(e -> {
-                NewItemPanel newItemPanel = new NewItemPanel();
+                NewItemPanel newItemPanel = new NewItemPanel(null, false);
                 // pegando a info do novo item no popup
                 int result = JOptionPane.showConfirmDialog(
                         mainContainer,
@@ -49,22 +51,24 @@ public class MyWindow {
                         JOptionPane.PLAIN_MESSAGE
                 );
 
-                Item newItem = window.onItemCreate(
-                        newItemPanel.getItemName(),
-                        newItemPanel.getItemColor(),
-                        newItemPanel.getItemSize(),
-                        newItemPanel.getItemOrigin(),
-                        newItemPanel.getItemPurchase(),
-                        newItemPanel.getItemConservation(),
-                        newItemPanel.getItemImagePath(),
-                        newItemPanel.hasLendingWarning(),
-                        newItemPanel.isAvailable()
-                );
-                // passa o novo item pro metodo que vai criar uma label pra ele
-                JLabel itemView = window.createItemView(newItem);
+                if(result == JOptionPane.OK_OPTION) {
+                    Item newItem = window.onItemCreate(
+                            newItemPanel.getItemName(),
+                            newItemPanel.getItemColor(),
+                            newItemPanel.getItemSize(),
+                            newItemPanel.getItemOrigin(),
+                            newItemPanel.getItemPurchase(),
+                            newItemPanel.getItemConservation(),
+                            newItemPanel.getItemImagePath(),
+                            newItemPanel.hasLendingWarning(),
+                            newItemPanel.isAvailable()
+                    );
+                    // passa o novo item pro metodo que vai criar uma label pra ele
+                    JLabel itemView = window.createItemView(newItem);
 
-                vestuarioView.newLabel(itemView);
-                vestuarioView.filterItems();
+                    vestuarioView.newLabel(itemView);
+                    vestuarioView.filterItems();
+                }
             });
 
             // panel pra guardar o botao das combinações
@@ -76,7 +80,7 @@ public class MyWindow {
             CategoryView combinacoesView = new CategoryView("Combinações", combinacoesActionPanel);
 
             novaCombinacaoButton.addActionListener(e -> {
-                NewSetPanel newSetPanel = new NewSetPanel(window.itemList);
+                NewSetPanel newSetPanel = new NewSetPanel(window.itemList, null, false);
                 // pegando a info da nova combinação no popup
                 int result = JOptionPane.showConfirmDialog(
                         mainContainer,
@@ -130,6 +134,20 @@ public class MyWindow {
         label.setBorder(BorderFactory.createLineBorder(Color.BLACK));
         label.setText(set.getName());
 
+        label.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                NewSetPanel editSetPanel = new NewSetPanel(itemList, set, true);
+
+                int result = JOptionPane.showConfirmDialog(label, editSetPanel, "Editar combinação", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+                if (result == JOptionPane.OK_OPTION) {
+                    set.setPiecesBulk(editSetPanel.getSelectedItems());
+                    label.setText(editSetPanel.getNameField());
+                }
+            }
+        });
+
         return label;
     }
 
@@ -168,6 +186,28 @@ public class MyWindow {
         // sempre mostra o nome do item
         label.setText(item.getName());
         label.setToolTipText(item.getName()); // mostra o nome completo do item quando passa o mouse por cima
+
+        label.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                NewItemPanel editItemPanel = new NewItemPanel(item, true);
+
+                int result = JOptionPane.showConfirmDialog(label, editItemPanel, "Editar item", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+                if (result == JOptionPane.OK_OPTION) {
+                    label.setText(editItemPanel.getItemName());
+                    item.setName(editItemPanel.getItemName());
+                    item.setColor(editItemPanel.getItemColor());
+                    item.setSize(editItemPanel.getItemSize());
+                    item.setOrigin_shop(editItemPanel.getItemOrigin());
+                    item.setPurchase_date(editItemPanel.getItemPurchase());
+                    item.setConservation(editItemPanel.getItemConservation());
+                    item.setImage_path(editItemPanel.getItemImagePath());
+                    item.setLending_warning(editItemPanel.hasLendingWarning());
+                    item.setAvailable(editItemPanel.isAvailable());
+                }
+            }
+        });
 
         return label;
     }

@@ -12,31 +12,37 @@ class NewItemPanel extends JPanel {
     private JRadioButton lendingYesButton, lendingNoButton;
     private JRadioButton availableYesButton, availableNoButton;
 
-    public NewItemPanel() {
+    public NewItemPanel(Item item, boolean edit) {
         // grid 8x2
         setLayout(new GridLayout(9, 2, 5, 5)); // rows, cols, hgap, vgap
 
         nameField = new JTextField();
+        if(edit) nameField.setText(item.getName());
         add(new JLabel("Nome:"));
         add(nameField);
 
         colorField = new JTextField();
+        if(edit) colorField.setText(item.getColor());
         add(new JLabel("Cor:"));
         add(colorField);
 
         sizeField = new JTextField();
+        if(edit) sizeField.setText(item.getSize());
         add(new JLabel("Tamanho:"));
         add(sizeField);
 
         originField = new JTextField();
+        if(edit) originField.setText(item.getOrigin_shop());
         add(new JLabel("Loja da compra:"));
         add(originField);
 
         purchaseField = new JTextField();
+        if(edit) purchaseField.setText(item.getPurchase_date());
         add(new JLabel("Data de compra:"));
         add(purchaseField);
 
         conservationField = new JTextField();
+        if(edit) conservationField.setText(item.getConservation());
         add(new JLabel("Conservação:"));
         add(conservationField);
 
@@ -44,6 +50,13 @@ class NewItemPanel extends JPanel {
         lendingYesButton = new JRadioButton("Sim");
         lendingNoButton = new JRadioButton("Não");
         lendingYesButton.setSelected(true); // seleção padrão
+        if(edit) {
+            if (item.hasLending_warning()) {
+                lendingYesButton.setSelected(true);
+            } else {
+                lendingNoButton.setSelected(true);
+            }
+        }
         ButtonGroup lendingGroup = new ButtonGroup();
         lendingGroup.add(lendingYesButton);
         lendingGroup.add(lendingNoButton);
@@ -58,6 +71,10 @@ class NewItemPanel extends JPanel {
         availableYesButton = new JRadioButton("Sim");
         availableNoButton = new JRadioButton("Não");
         availableYesButton.setSelected(true); // seleção padrão
+        if(edit) {
+            if(item.isAvailable()) availableYesButton.setSelected(true);
+            else availableNoButton.setSelected(true);
+        }
         ButtonGroup availableGroup = new ButtonGroup();
         availableGroup.add(availableYesButton);
         availableGroup.add(availableNoButton);
@@ -73,6 +90,7 @@ class NewItemPanel extends JPanel {
         JPanel imagePanel = new JPanel(new BorderLayout(5, 0));
         imagePathField = new JTextField();
         imagePathField.setEditable(false);
+        if(edit) imagePathField.setText(item.getImage_path());
         JButton browseButton = new JButton("...");
         imagePanel.add(imagePathField, BorderLayout.CENTER);
         imagePanel.add(browseButton, BorderLayout.EAST);

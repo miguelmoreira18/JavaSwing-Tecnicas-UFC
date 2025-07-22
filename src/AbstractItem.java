@@ -58,7 +58,7 @@ public abstract class AbstractItem {
 
     public void setImage_path(String image_path) { this.image_path = image_path; }
 
-    public boolean isLending_warning() {
+    public boolean hasLending_warning() {
         return lending_warning;
     }
 
