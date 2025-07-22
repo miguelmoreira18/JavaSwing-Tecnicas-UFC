@@ -3,14 +3,27 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.text.DateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class MyWindow {
-    private ArrayList<Item> itemList = new ArrayList<>();
+    private static ArrayList<Item> itemList = new ArrayList<>();
     private ArrayList<Set> setList = new ArrayList<>();
+    private static CategoryView vestuarioView;
+    private static CategoryView combinacoesView;
+    private static JLabel currentlyClickedLabel;
 
     public static void main(String[] args) {
+        UIManager.put("OptionPane.yesButtonText", "Sim");
+        UIManager.put("OptionPane.noButtonText", "Não");
+        UIManager.put("OptionPane.cancelButtonText", "Cancelar");
+        UIManager.put("OptionPane.okButtonText", "OK");
+
         MyWindow window = new MyWindow();
         SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Gestor de vestuário");
@@ -27,18 +40,21 @@ public class MyWindow {
 
             JButton novoItemButton = new JButton("Novo item");
             JButton novaLavagemButton = new JButton("Nova lavagem");
-            JButton edicaoButton = new JButton("Editar item");
+            JButton novoEmprestimoButton = new JButton("Emprestar item");
 
             // mesmo alignment pros 2 botoes
             novoItemButton.setAlignmentX(Component.CENTER_ALIGNMENT);
             novaLavagemButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+            novoEmprestimoButton.setAlignmentX(Component.CENTER_ALIGNMENT);
 
             vestuarioActionPanel.add(novoItemButton);
             vestuarioActionPanel.add(Box.createRigidArea(new Dimension(0, 5))); // gap entre os botoes
             vestuarioActionPanel.add(novaLavagemButton);
+            vestuarioActionPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+            vestuarioActionPanel.add(novoEmprestimoButton);
 
             // criando o view dos itens do vestuario
-            CategoryView vestuarioView = new CategoryView("Vestuário", vestuarioActionPanel);
+            vestuarioView = new CategoryView("Vestuário", vestuarioActionPanel);
 
             novoItemButton.addActionListener(e -> {
                 NewItemPanel newItemPanel = new NewItemPanel(null, false);
@@ -71,16 +87,50 @@ public class MyWindow {
                 }
             });
 
+            novaLavagemButton.addActionListener(e -> {
+                NewEmprestimoOrLaundryPanel newEmprestimoOrLaundryPanel = new NewEmprestimoOrLaundryPanel(itemList, frame, false);
+
+                int result = JOptionPane.showConfirmDialog(
+                        mainContainer,
+                        newEmprestimoOrLaundryPanel,
+                        "Lavar itens:",
+                        JOptionPane.OK_CANCEL_OPTION,
+                        JOptionPane.PLAIN_MESSAGE
+                );
+
+                if(result == JOptionPane.OK_OPTION) {
+
+                }
+            });
+
+            novoEmprestimoButton.addActionListener(e -> {
+                NewEmprestimoOrLaundryPanel newEmprestimoOrLaundryPanel = new NewEmprestimoOrLaundryPanel(itemList, frame, true);
+
+                int result = JOptionPane.showConfirmDialog(
+                        mainContainer,
+                        newEmprestimoOrLaundryPanel,
+                        "Emprestar item",
+                        JOptionPane.OK_CANCEL_OPTION,
+                        JOptionPane.PLAIN_MESSAGE
+                );
+
+                if(result == JOptionPane.OK_OPTION) {
+                    for(Item i : newEmprestimoOrLaundryPanel.getSelectedItems()) {
+                        i.lendItem();
+                    }
+                }
+            });
+
             // panel pra guardar o botao das combinações
             JPanel combinacoesActionPanel = new JPanel(new GridBagLayout()); // gridbag pra ficar centrado no meio
             JButton novaCombinacaoButton = new JButton("Nova combinação:");
             combinacoesActionPanel.add(novaCombinacaoButton);
 
             // cria a view de combinações
-            CategoryView combinacoesView = new CategoryView("Combinações", combinacoesActionPanel);
+            combinacoesView = new CategoryView("Combinações", combinacoesActionPanel);
 
             novaCombinacaoButton.addActionListener(e -> {
-                NewSetPanel newSetPanel = new NewSetPanel(window.itemList, null, false);
+                NewSetPanel newSetPanel = new NewSetPanel(itemList, null, false);
                 // pegando a info da nova combinação no popup
                 int result = JOptionPane.showConfirmDialog(
                         mainContainer,
@@ -118,6 +168,9 @@ public class MyWindow {
     public Set onSetCreate(String name, List<Item> items) {
         Set newSet = new Set(name, items);
         setList.add(newSet);
+        for(Item i : items) {
+            i.setsIn.add(newSet);
+        }
         return newSet;
     }
 
@@ -134,16 +187,70 @@ public class MyWindow {
         label.setBorder(BorderFactory.createLineBorder(Color.BLACK));
         label.setText(set.getName());
 
+        JPopupMenu popupMenu = new JPopupMenu();
+
+        JMenuItem editSet = new JMenuItem("Editar");
+        JMenuItem removeSet = new JMenuItem("Remover");
+        JMenuItem usageSet = new JMenuItem("Registrar uso");
+
+        popupMenu.add(editSet);
+        popupMenu.add(removeSet);
+        popupMenu.add(usageSet);
+
+        editSet.addActionListener(e -> {
+            NewSetPanel editSetPanel = new NewSetPanel(itemList, set, true);
+
+            int result = JOptionPane.showConfirmDialog(label, editSetPanel, "Editar combinação", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+            if (result == JOptionPane.OK_OPTION) {
+                set.setPiecesBulk(editSetPanel.getSelectedItems());
+                label.setText(editSetPanel.getNameField());
+            }
+        });
+
+        removeSet.addActionListener(e -> {
+            if (currentlyClickedLabel != null) {
+                int result = JOptionPane.showConfirmDialog(
+                        label,
+                        "Tem certeza que deseja remover '" + currentlyClickedLabel.getText() + "'?",
+                        "Confirmar Remoção",
+                        JOptionPane.YES_NO_OPTION
+                );
+
+                if(result == JOptionPane.YES_OPTION) {
+                    combinacoesView.removeItem(currentlyClickedLabel);
+                    currentlyClickedLabel = null;
+                    setList.remove(set);
+                }
+            }
+        });
+
+        usageSet.addActionListener(e -> {
+            if(!set.getUsages().isEmpty() && set.getUsages().size() >= 5) {
+                set.getUsages().removeFirst();
+            }
+            LocalDate today = LocalDate.now();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            String formattedDate = today.format(formatter);
+
+            System.out.println(formattedDate); // Prints something like "22/07/2025"
+            set.setUsages(formattedDate);
+        });
+
         label.addMouseListener(new MouseAdapter() {
             @Override
-            public void mouseClicked(MouseEvent e) {
-                NewSetPanel editSetPanel = new NewSetPanel(itemList, set, true);
-
-                int result = JOptionPane.showConfirmDialog(label, editSetPanel, "Editar combinação", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-
-                if (result == JOptionPane.OK_OPTION) {
-                    set.setPiecesBulk(editSetPanel.getSelectedItems());
-                    label.setText(editSetPanel.getNameField());
+            public void mousePressed(MouseEvent e) {
+                showPopup(e);
+            }
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                showPopup(e);
+            }
+            public void showPopup(MouseEvent e) {
+                if(e.isPopupTrigger()) {
+                    currentlyClickedLabel = (JLabel) e.getComponent();
+                    // popup na posição do mouse
+                    popupMenu.show(e.getComponent(), e.getX(), e.getY());
                 }
             }
         });
@@ -187,10 +294,16 @@ public class MyWindow {
         label.setText(item.getName());
         label.setToolTipText(item.getName()); // mostra o nome completo do item quando passa o mouse por cima
 
-        label.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                NewItemPanel editItemPanel = new NewItemPanel(item, true);
+        JPopupMenu popupMenu = new JPopupMenu();
+
+        JMenuItem editItem = new JMenuItem("Editar");
+        JMenuItem removeItem = new JMenuItem("Remover");
+
+        popupMenu.add(editItem);
+        popupMenu.add(removeItem);
+
+        editItem.addActionListener(e -> {
+            NewItemPanel editItemPanel = new NewItemPanel(item, true);
 
                 int result = JOptionPane.showConfirmDialog(label, editItemPanel, "Editar item", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
 
@@ -205,6 +318,40 @@ public class MyWindow {
                     item.setImage_path(editItemPanel.getItemImagePath());
                     item.setLending_warning(editItemPanel.hasLendingWarning());
                     item.setAvailable(editItemPanel.isAvailable());
+                }
+        });
+
+        removeItem.addActionListener(e -> {
+            if (currentlyClickedLabel != null) {
+                int result = JOptionPane.showConfirmDialog(
+                        label,
+                        "Tem certeza que deseja remover '" + currentlyClickedLabel.getText() + "'?",
+                        "Confirmar Remoção",
+                        JOptionPane.YES_NO_OPTION
+                );
+
+                if(result == JOptionPane.YES_OPTION) {
+                    vestuarioView.removeItem(currentlyClickedLabel);
+                    currentlyClickedLabel = null;
+                    itemList.remove(item);
+                }
+            }
+        });
+
+        label.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                showPopup(e);
+            }
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                showPopup(e);
+            }
+            public void showPopup(MouseEvent e) {
+                if(e.isPopupTrigger()) {
+                    currentlyClickedLabel = (JLabel) e.getComponent();
+                    // popup na posição do mouse
+                    popupMenu.show(e.getComponent(), e.getX(), e.getY());
                 }
             }
         });

@@ -71,6 +71,10 @@ public class CategoryView extends JPanel {
         }
     }
 
+    public void removeItem(JLabel label) {
+        itemsScrollPaneContent.remove(label);
+    }
+
     public void newLabel(JLabel label) {
         itemsScrollPaneContent.add(label);
         itemsScrollPaneContent.revalidate();

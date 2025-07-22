@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class Set {
@@ -9,6 +10,7 @@ public class Set {
     public Set(String name, List<Item> items) {
         this.name = name;
         pieces = items;
+        usages = new ArrayList<>();
     }
 
     public boolean containsItem(Item item) {

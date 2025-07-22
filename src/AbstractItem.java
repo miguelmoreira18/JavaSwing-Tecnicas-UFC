@@ -1,4 +1,6 @@
-public abstract class AbstractItem {
+import java.util.ArrayList;
+
+public abstract class AbstractItem implements IEmprestavel {
     protected String name;
     protected String color;
     protected String size;
@@ -8,6 +10,7 @@ public abstract class AbstractItem {
     protected String image_path;
     protected boolean lending_warning;
     protected boolean available;
+    protected ArrayList<Set> setsIn; // combinações em que o item está
 
     //region Getters and Setters
     public String getName() { return name; }
@@ -72,6 +75,14 @@ public abstract class AbstractItem {
 
     public void setAvailable(boolean available) {
         this.available = available;
+    }
+
+    public  ArrayList<Set> getSetsIn() {
+        return setsIn;
+    }
+
+    public void setSetsIn(Set set) {
+        setsIn.add(set);
     }
     //endregion
 }
