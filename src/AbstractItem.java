@@ -1,6 +1,10 @@
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public abstract class AbstractItem implements IEmprestavel {
+public abstract class AbstractItem implements IEmprestavel, Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
     protected String name;
     protected String color;
     protected String size;
@@ -11,6 +15,8 @@ public abstract class AbstractItem implements IEmprestavel {
     protected boolean lending_warning;
     protected boolean available;
     protected ArrayList<Set> setsIn; // combinações em que o item está
+    protected int washes;
+    protected int usages;
 
     //region Getters and Setters
     public String getName() { return name; }
@@ -83,6 +89,21 @@ public abstract class AbstractItem implements IEmprestavel {
 
     public void setSetsIn(Set set) {
         setsIn.add(set);
+    }
+
+    public int getWashes() {
+        return washes;
+    }
+
+    public void setWashes() {
+        washes++;
+    }
+
+    public int getUsages() {
+        return usages;
+    }
+    public void setUsages() {
+        usages++;
     }
     //endregion
 }

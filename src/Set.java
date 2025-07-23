@@ -1,11 +1,15 @@
+import java.io.Serial;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
+import java.io.Serializable;
 
-public class Set {
+public class Set implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 2L;
     private String name;
     private List<Item> pieces;
     private ArrayList<String> usages;
+    private int totalUsages;
 
     public Set(String name, List<Item> items) {
         this.name = name;
@@ -46,5 +50,13 @@ public class Set {
 
     public void setUsages(String date){
         usages.add(date);
+    }
+
+    public int getTotalUsages() {
+        return totalUsages;
+    }
+
+    public void setTotalUsages() {
+        totalUsages++;
     }
 }

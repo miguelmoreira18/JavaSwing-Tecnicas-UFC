@@ -13,7 +13,7 @@ class NewItemPanel extends JPanel {
     private JRadioButton availableYesButton, availableNoButton;
 
     public NewItemPanel(Item item, boolean edit) {
-        // grid 8x2
+        // grid 9x2
         setLayout(new GridLayout(9, 2, 5, 5)); // rows, cols, hgap, vgap
 
         nameField = new JTextField();

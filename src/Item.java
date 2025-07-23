@@ -12,6 +12,7 @@ public class Item extends AbstractItem {
         this.lending_warning = lending_warning;
         this.available = available;
         this.setsIn = new ArrayList<>();
+        this.usages = 0;
     }
 
     @Override

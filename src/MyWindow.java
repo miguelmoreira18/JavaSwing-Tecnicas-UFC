@@ -3,22 +3,30 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
-import java.text.DateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 
 public class MyWindow {
     private static ArrayList<Item> itemList = new ArrayList<>();
-    private ArrayList<Set> setList = new ArrayList<>();
+    private static ArrayList<Set> setList = new ArrayList<>();
+    private static JPanel mainContainer;
     private static CategoryView vestuarioView;
     private static CategoryView combinacoesView;
     private static JLabel currentlyClickedLabel;
+    private static Item mostUsedItem;
+    private static JLabel mostUsedItemLabel;
+    private static Set mostUsedSet;
+    private static JLabel mostUsedSetLabel;
 
     public static void main(String[] args) {
+        ApplicationData appData = DataManager.loadData();
+        itemList = appData.getItemList();
+        setList = appData.getSetList();
+        mostUsedItem = appData.getMostUsedItem();
+        mostUsedSet =  appData.getMostUsedSet();
+
         UIManager.put("OptionPane.yesButtonText", "Sim");
         UIManager.put("OptionPane.noButtonText", "Não");
         UIManager.put("OptionPane.cancelButtonText", "Cancelar");
@@ -29,7 +37,7 @@ public class MyWindow {
             JFrame frame = new JFrame("Gestor de vestuário");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-            JPanel mainContainer = new JPanel();
+            mainContainer = new JPanel();
             mainContainer.setLayout(new BoxLayout(mainContainer, BoxLayout.Y_AXIS));
 
             // panel pra guardar os botoes do vestuario
@@ -80,7 +88,7 @@ public class MyWindow {
                             newItemPanel.isAvailable()
                     );
                     // passa o novo item pro metodo que vai criar uma label pra ele
-                    JLabel itemView = window.createItemView(newItem);
+                    JLabel itemView = createItemView(newItem);
 
                     vestuarioView.newLabel(itemView);
                     vestuarioView.filterItems();
@@ -99,7 +107,9 @@ public class MyWindow {
                 );
 
                 if(result == JOptionPane.OK_OPTION) {
-
+                    for(Item i : newEmprestimoOrLaundryPanel.getSelectedItems()) {
+                        i.setWashes();
+                    }
                 }
             });
 
@@ -143,7 +153,7 @@ public class MyWindow {
                 if(result == JOptionPane.OK_OPTION) {
                     Set newSet = window.onSetCreate(newSetPanel.getNameField(), newSetPanel.getSelectedItems());
 
-                    JLabel setView = window.createSetView(newSet);
+                    JLabel setView = createSetView(newSet);
 
                     combinacoesView.newLabel(setView);
                     combinacoesView.filterItems();
@@ -151,10 +161,36 @@ public class MyWindow {
             });
 
             // bota as 2 views no container principal
+            for(Item i : itemList) {
+                vestuarioView.newLabel(createItemView(i));
+                vestuarioView.filterItems();
+            }
+            for(Set s : setList) {
+                combinacoesView.newLabel(createSetView(s));
+                combinacoesView.filterItems();
+            }
             mainContainer.add(vestuarioView);
             mainContainer.add(Box.createRigidArea(new Dimension(0, 10))); // gap entre as views
             mainContainer.add(combinacoesView);
+            mostUsedItemLabel = new JLabel();
+            mostUsedSetLabel = new JLabel();
+            mainContainer.add(mostUsedItemLabel);
+            mainContainer.add(mostUsedSetLabel);
+            if (mostUsedItem != null) mostUsedItemLabel.setText("Item mais usado: " + mostUsedItem.getName());
+            if (mostUsedSet != null) mostUsedSetLabel.setText("Combinação mais usada: " + mostUsedSet.getName());
             mainContainer.add(Box.createVerticalGlue());
+
+            frame.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+                    appData.setItemList(itemList);
+                    appData.setSetList(setList);
+                    appData.setMostUsedItem(mostUsedItem);
+                    appData.setMostUsedSet(mostUsedSet);
+                    DataManager.saveData(appData);
+                }
+            });
+
 
             JScrollPane mainScrollPane = new JScrollPane(mainContainer);
             frame.add(mainScrollPane);
@@ -181,7 +217,7 @@ public class MyWindow {
         return newItem;
     }
 
-    private JLabel createSetView(Set set) {
+    private static JLabel createSetView(Set set) {
         JLabel label = new JLabel(set.getName(), SwingConstants.CENTER);
         label.setPreferredSize(new Dimension(100, 140));
         label.setBorder(BorderFactory.createLineBorder(Color.BLACK));
@@ -219,6 +255,7 @@ public class MyWindow {
 
                 if(result == JOptionPane.YES_OPTION) {
                     combinacoesView.removeItem(currentlyClickedLabel);
+                    combinacoesView.filterItems();
                     currentlyClickedLabel = null;
                     setList.remove(set);
                 }
@@ -233,8 +270,22 @@ public class MyWindow {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
             String formattedDate = today.format(formatter);
 
-            System.out.println(formattedDate); // Prints something like "22/07/2025"
+            System.out.println(formattedDate);
             set.setUsages(formattedDate);
+            set.setTotalUsages();
+            if(mostUsedSet == null) mostUsedSet = set;
+            else {
+                if(set.getTotalUsages() > mostUsedSet.getTotalUsages()) mostUsedSet = set;
+            }
+            mostUsedSetLabel.setText("Combinação mais usada: " + mostUsedSet.getName());
+            for(Item i : set.getPieces()) {
+                i.setUsages();
+                if(mostUsedItem == null) mostUsedItem = i;
+                else {
+                    if(i.getUsages() > mostUsedItem.getUsages()) mostUsedItem = i;
+                }
+                mostUsedItemLabel.setText("Item mais usado: " + mostUsedItem.getName());
+            }
         });
 
         label.addMouseListener(new MouseAdapter() {
@@ -258,7 +309,7 @@ public class MyWindow {
         return label;
     }
 
-    private JLabel createItemView(Item item) {
+    private static JLabel createItemView(Item item) {
         JLabel label = new JLabel();
         // configura a label pra imagem e texto
         label.setVerticalTextPosition(JLabel.BOTTOM);
@@ -266,7 +317,7 @@ public class MyWindow {
         label.setBorder(BorderFactory.createEtchedBorder());
         label.setOpaque(true);
         label.setBackground(Color.WHITE);
-        label.setPreferredSize(new Dimension(100, 140)); // A consistent size for all items
+        label.setPreferredSize(new Dimension(100, 140));
 
         String imagePath = item.getImage_path();
 
@@ -283,10 +334,10 @@ public class MyWindow {
                     Image resizedImage = icon.getImage().getScaledInstance(100, 110, Image.SCALE_SMOOTH);
                     label.setIcon(new ImageIcon(resizedImage));
                 } else {
-                    System.err.println("ERROR: Failed to load the image. The file might be corrupted.");
+                    System.err.println("ERRO: Erro ao carregar o arquivo. O arquivo pode estar corrompido.");
                 }
             } else {
-                System.err.println("ERROR: File not found at path: " + imagePath);
+                System.err.println("ERRO: Arquivo não encontrado em: " + imagePath);
             }
         }
 
@@ -305,20 +356,20 @@ public class MyWindow {
         editItem.addActionListener(e -> {
             NewItemPanel editItemPanel = new NewItemPanel(item, true);
 
-                int result = JOptionPane.showConfirmDialog(label, editItemPanel, "Editar item", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+            int result = JOptionPane.showConfirmDialog(label, editItemPanel, "Editar item", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
 
-                if (result == JOptionPane.OK_OPTION) {
-                    label.setText(editItemPanel.getItemName());
-                    item.setName(editItemPanel.getItemName());
-                    item.setColor(editItemPanel.getItemColor());
-                    item.setSize(editItemPanel.getItemSize());
-                    item.setOrigin_shop(editItemPanel.getItemOrigin());
-                    item.setPurchase_date(editItemPanel.getItemPurchase());
-                    item.setConservation(editItemPanel.getItemConservation());
-                    item.setImage_path(editItemPanel.getItemImagePath());
-                    item.setLending_warning(editItemPanel.hasLendingWarning());
-                    item.setAvailable(editItemPanel.isAvailable());
-                }
+            if (result == JOptionPane.OK_OPTION) {
+                label.setText(editItemPanel.getItemName());
+                item.setName(editItemPanel.getItemName());
+                item.setColor(editItemPanel.getItemColor());
+                item.setSize(editItemPanel.getItemSize());
+                item.setOrigin_shop(editItemPanel.getItemOrigin());
+                item.setPurchase_date(editItemPanel.getItemPurchase());
+                item.setConservation(editItemPanel.getItemConservation());
+                item.setImage_path(editItemPanel.getItemImagePath());
+                item.setLending_warning(editItemPanel.hasLendingWarning());
+                item.setAvailable(editItemPanel.isAvailable());
+            }
         });
 
         removeItem.addActionListener(e -> {
@@ -332,6 +383,7 @@ public class MyWindow {
 
                 if(result == JOptionPane.YES_OPTION) {
                     vestuarioView.removeItem(currentlyClickedLabel);
+                    vestuarioView.filterItems();
                     currentlyClickedLabel = null;
                     itemList.remove(item);
                 }
